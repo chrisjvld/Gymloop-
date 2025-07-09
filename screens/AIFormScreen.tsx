@@ -31,6 +31,7 @@ interface QuestionCardProps {
   onNext: () => void;
   nextDisabled?: boolean;
   onBack?: () => void;
+  onExit?: () => void;
 }
 
 function QuestionCard({
@@ -41,6 +42,7 @@ function QuestionCard({
   onNext,
   nextDisabled = false,
   onBack,
+  onExit,
 }: QuestionCardProps) {
   return (
     <SafeAreaView style={questionCardStyles.container}>
@@ -59,11 +61,20 @@ function QuestionCard({
             />
           </View>
         </View>
-        {onBack && (
-          <TouchableOpacity style={questionCardStyles.backButton} onPress={onBack}>
-            <Text style={questionCardStyles.backText}>← Back</Text>
-          </TouchableOpacity>
-        )}
+        <View style={questionCardStyles.headerButtons}>
+          {onBack ? (
+            <TouchableOpacity style={questionCardStyles.backButton} onPress={onBack}>
+              <Text style={questionCardStyles.backText}>← Back</Text>
+            </TouchableOpacity>
+          ) : (
+            <View />
+          )}
+          {onExit && (
+            <TouchableOpacity style={questionCardStyles.exitButton} onPress={onExit}>
+              <Text style={questionCardStyles.exitText}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Question Content */}
@@ -135,6 +146,10 @@ export default function AIFormScreen({ navigation }: QuestionFlowScreenProps) {
     }
   };
 
+  const handleExit = () => {
+    navigation.navigate('Home');
+  };
+
   const renderQuestion = () => {
     switch (currentStep) {
       case 1:
@@ -145,6 +160,7 @@ export default function AIFormScreen({ navigation }: QuestionFlowScreenProps) {
             totalSteps={totalSteps}
             onNext={handleNext}
             nextDisabled={!validateCurrentStep()}
+            onExit={handleExit}
           >
             <View style={styles.buttonGroup}>
               {['Male', 'Female', 'Other'].map((option) => (
@@ -179,6 +195,7 @@ export default function AIFormScreen({ navigation }: QuestionFlowScreenProps) {
             onNext={handleNext}
             onBack={handleBack}
             nextDisabled={!validateCurrentStep()}
+            onExit={handleExit}
           >
             <View style={styles.buttonGroup}>
               {[
@@ -219,6 +236,7 @@ export default function AIFormScreen({ navigation }: QuestionFlowScreenProps) {
             onNext={handleNext}
             onBack={handleBack}
             nextDisabled={!validateCurrentStep()}
+            onExit={handleExit}
           >
             <View style={styles.buttonGroup}>
               {[
@@ -257,6 +275,7 @@ export default function AIFormScreen({ navigation }: QuestionFlowScreenProps) {
             onNext={handleNext}
             onBack={handleBack}
             nextDisabled={!validateCurrentStep()}
+            onExit={handleExit}
           >
             <View style={styles.numberButtonGroup}>
               {[1, 2, 3, 4, 5, 6, 7].map((num) => (
@@ -291,6 +310,7 @@ export default function AIFormScreen({ navigation }: QuestionFlowScreenProps) {
             onNext={handleNext}
             onBack={handleBack}
             nextDisabled={!validateCurrentStep()}
+            onExit={handleExit}
           >
             <View style={styles.buttonGroup}>
               {[
@@ -331,6 +351,7 @@ export default function AIFormScreen({ navigation }: QuestionFlowScreenProps) {
             onNext={handleNext}
             onBack={handleBack}
             nextDisabled={!validateCurrentStep()}
+            onExit={handleExit}
           >
             <View style={styles.buttonGroup}>
               {[
@@ -405,12 +426,26 @@ const questionCardStyles = StyleSheet.create({
     backgroundColor: '#007AFF',
     borderRadius: 2,
   },
+  headerButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   backButton: {
     alignSelf: 'flex-start',
   },
   backText: {
     color: '#007AFF',
     fontSize: 16,
+  },
+  exitButton: {
+    alignSelf: 'flex-end',
+    padding: 8,
+  },
+  exitText: {
+    color: '#007AFF',
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   content: {
     flex: 1,
