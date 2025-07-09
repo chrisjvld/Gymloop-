@@ -1,50 +1,138 @@
-# Welcome to your Expo app 👋
+# GymLoop++
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native fitness app built with Expo that uses AI to create personalized workout plans.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Authentication**: Secure user registration and login with Supabase
+- **AI Workout Plans**: Personalized workout generation based on user preferences (coming soon)
+- **Custom Plans**: Create your own workout routines (coming soon)
+- **User Profiles**: Manage fitness goals, preferences, and injury history
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+- **Frontend**: React Native with Expo
+- **Authentication & Database**: Supabase
+- **Navigation**: React Navigation
+- **AI Integration**: OpenAI API (coming soon)
+- **Language**: TypeScript
 
-   ```bash
-   npx expo start
-   ```
+## Project Structure
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+gymloop/
+├── screens/           # All app screens
+│   ├── LoginScreen.tsx
+│   ├── SignUpScreen.tsx
+│   ├── HomeScreen.tsx
+│   ├── AIFormScreen.tsx
+│   ├── PlanScreen.tsx
+│   └── CustomPlanScreen.tsx
+├── components/        # Shared React components
+├── lib/              # Helper functions and API integrations
+│   ├── supabase.ts   # Supabase configuration
+│   └── openai.ts     # OpenAI integration (placeholder)
+├── App.tsx           # Main app component with navigation
+└── index.js          # App entry point
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Setup Instructions
 
-## Learn more
+### 1. Prerequisites
 
-To learn more about developing your project with Expo, look at the following resources:
+- Node.js (v16 or higher)
+- npm or yarn
+- Expo CLI: `npm install -g expo-cli`
+- iOS Simulator (for iOS) or Android emulator (for Android)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 2. Installation
 
-## Join the community
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd gymloop
 
-Join our community of developers creating universal apps.
+# Install dependencies
+npm install
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### 3. Supabase Configuration
+
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Get your project URL and anon key from Settings > API
+3. Update `lib/supabase.ts` with your credentials:
+
+```typescript
+const supabaseUrl = 'YOUR_SUPABASE_URL';
+const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+```
+
+### 4. Authentication Setup
+
+The app uses Supabase's built-in authentication. No additional setup required - users can register and login once Supabase is configured.
+
+### 5. Running the App
+
+```bash
+# Start the development server
+npm start
+
+# Or run on specific platform
+npm run ios     # iOS simulator
+npm run android # Android emulator
+npm run web     # Web browser
+```
+
+## Current Features
+
+### ✅ Implemented
+- User authentication (login/signup)
+- Home screen with navigation
+- AI Plan form with user preferences
+- Plan generation screen (placeholder)
+- Custom plan screen (placeholder)
+
+### 🚧 Coming Soon
+- OpenAI integration for workout plan generation
+- Custom workout creation
+- Exercise tracking
+- Progress monitoring
+- Workout history
+
+## Usage
+
+1. **Sign Up/Login**: Create an account or login with existing credentials
+2. **Choose Plan Type**: Select "Start AI Plan" or "Create Custom Plan"
+3. **AI Plan Form**: Fill out your fitness preferences:
+   - Gender, age, fitness goals
+   - Workout frequency and session length
+   - Injury history (optional)
+4. **Plan Generation**: View your personalized workout plan (placeholder)
+
+## Development Notes
+
+- The app uses React Navigation for screen management
+- Supabase handles authentication and will handle data storage
+- TypeScript is used throughout for type safety
+- The UI follows modern design principles with clean, accessible interfaces
+
+## Future Enhancements
+
+- OpenAI API integration for intelligent workout plan generation
+- Exercise video demonstrations
+- Progress tracking and analytics
+- Social features and workout sharing
+- Wearable device integration
+- Offline mode support
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Commit changes: `git commit -am 'Add feature'`
+4. Push to branch: `git push origin feature-name`
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
