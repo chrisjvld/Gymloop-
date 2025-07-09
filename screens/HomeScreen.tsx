@@ -33,25 +33,35 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.welcomeText}>Welcome to your fitness journey!</Text>
+        <Text style={styles.welcomeText}>Welcome to GymLoop++</Text>
         <Text style={styles.subtitle}>Choose how you'd like to get started:</Text>
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={[styles.actionButton, styles.primaryButton]}
+            onPress={() => navigation.navigate('Plans')}
+          >
+            <Text style={styles.primaryButtonText}>My Plans</Text>
+            <Text style={styles.buttonSubtext}>
+              View and manage your workout plans
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionButton, styles.secondaryButton]}
             onPress={() => navigation.navigate('AIForm')}
           >
-            <Text style={styles.primaryButtonText}>Start AI Plan</Text>
+            <Text style={styles.secondaryButtonText}>Start AI Plan</Text>
             <Text style={styles.buttonSubtext}>
               Let AI create a personalized workout plan for you
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.actionButton, styles.secondaryButton]}
+            style={[styles.actionButton, styles.tertiaryButton]}
             onPress={() => navigation.navigate('CustomPlan')}
           >
-            <Text style={styles.secondaryButtonText}>Create Custom Plan</Text>
+            <Text style={styles.tertiaryButtonText}>Create Custom Plan</Text>
             <Text style={styles.buttonSubtext}>
               Build your own workout routine
             </Text>
@@ -130,6 +140,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#007AFF',
   },
+  tertiaryButton: {
+    backgroundColor: '#f8f9fa',
+    borderWidth: 2,
+    borderColor: '#28a745',
+  },
   primaryButtonText: {
     color: 'white',
     fontSize: 20,
@@ -138,6 +153,12 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: '#007AFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  tertiaryButtonText: {
+    color: '#28a745',
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 8,

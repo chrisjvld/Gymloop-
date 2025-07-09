@@ -7,6 +7,7 @@ import { supabase } from './lib/supabase';
 import LoginScreen from './screens/LoginScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import HomeScreen from './screens/HomeScreen';
+import PlansScreen from './screens/PlansScreen';
 import AIFormScreen from './screens/AIFormScreen';
 import PlanScreen from './screens/PlanScreen';
 import CustomPlanScreen from './screens/CustomPlanScreen';
@@ -56,6 +57,7 @@ export default function App() {
           // Main App Stack
           <>
             <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="Plans" component={PlansScreen} />
             <Stack.Screen name="AIForm" component={AIFormScreen} />
             <Stack.Screen name="Plan" component={PlanScreen} />
             <Stack.Screen name="CustomPlan" component={CustomPlanScreen} />
