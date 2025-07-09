@@ -5,18 +5,94 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
   SafeAreaView,
   Alert,
 } from 'react-native';
-import RNPickerSelect from 'react-native-picker-select';
 
-interface AIFormScreenProps {
+interface QuestionFlowScreenProps {
   navigation: any;
 }
 
-export default function AIFormScreen({ navigation }: AIFormScreenProps) {
-  const [formData, setFormData] = useState({
+interface UserAnswers {
+  gender: string;
+  age: string;
+  fitnessGoal: string;
+  workoutFrequency: string;
+  sessionLength: string;
+  injuryHistory: string;
+}
+
+// QuestionCard component (inline for now)
+interface QuestionCardProps {
+  title: string;
+  currentStep: number;
+  totalSteps: number;
+  children: React.ReactNode;
+  onNext: () => void;
+  nextDisabled?: boolean;
+  onBack?: () => void;
+}
+
+function QuestionCard({
+  title,
+  currentStep,
+  totalSteps,
+  children,
+  onNext,
+  nextDisabled = false,
+  onBack,
+}: QuestionCardProps) {
+  return (
+    <SafeAreaView style={questionCardStyles.container}>
+      {/* Progress Header */}
+      <View style={questionCardStyles.header}>
+        <View style={questionCardStyles.progressContainer}>
+          <Text style={questionCardStyles.progressText}>
+            {currentStep} of {totalSteps}
+          </Text>
+          <View style={questionCardStyles.progressBar}>
+            <View
+              style={[
+                questionCardStyles.progressFill,
+                { width: `${(currentStep / totalSteps) * 100}%` },
+              ]}
+            />
+          </View>
+        </View>
+        {onBack && (
+          <TouchableOpacity style={questionCardStyles.backButton} onPress={onBack}>
+            <Text style={questionCardStyles.backText}>← Back</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Question Content */}
+      <View style={questionCardStyles.content}>
+        <Text style={questionCardStyles.title}>{title}</Text>
+        <View style={questionCardStyles.inputContainer}>
+          {children}
+        </View>
+      </View>
+
+      {/* Next Button */}
+      <View style={questionCardStyles.footer}>
+        <TouchableOpacity
+          style={[questionCardStyles.nextButton, nextDisabled && questionCardStyles.nextButtonDisabled]}
+          onPress={onNext}
+          disabled={nextDisabled}
+        >
+          <Text style={[questionCardStyles.nextButtonText, nextDisabled && questionCardStyles.nextButtonTextDisabled]}>
+            {currentStep === totalSteps ? 'Generate Plan' : 'Next'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+export default function AIFormScreen({ navigation }: QuestionFlowScreenProps) {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [answers, setAnswers] = useState<UserAnswers>({
     gender: '',
     age: '',
     fitnessGoal: '',
@@ -25,159 +101,280 @@ export default function AIFormScreen({ navigation }: AIFormScreenProps) {
     injuryHistory: '',
   });
 
-  const genderOptions = [
-    { label: 'Male', value: 'male' },
-    { label: 'Female', value: 'female' },
-    { label: 'Other', value: 'other' },
-  ];
+  const totalSteps = 6;
 
-  const fitnessGoalOptions = [
-    { label: 'Muscle Gain', value: 'muscle_gain' },
-    { label: 'Fat Loss', value: 'fat_loss' },
-    { label: 'Endurance', value: 'endurance' },
-  ];
-
-  const workoutFrequencyOptions = [
-    { label: '1 day per week', value: '1' },
-    { label: '2 days per week', value: '2' },
-    { label: '3 days per week', value: '3' },
-    { label: '4 days per week', value: '4' },
-    { label: '5 days per week', value: '5' },
-    { label: '6 days per week', value: '6' },
-    { label: '7 days per week', value: '7' },
-  ];
-
-  const handleSubmit = () => {
-    // Validate all fields are filled
-    if (!formData.gender || !formData.age || !formData.fitnessGoal || 
-        !formData.workoutFrequency || !formData.sessionLength) {
-      Alert.alert('Error', 'Please fill in all required fields');
-      return;
+  const validateCurrentStep = (): boolean => {
+    switch (currentStep) {
+      case 1: return answers.gender !== '';
+      case 2: return answers.age !== '';
+      case 3: return answers.fitnessGoal !== '';
+      case 4: return answers.workoutFrequency !== '';
+      case 5: return answers.sessionLength !== '';
+      case 6: return answers.injuryHistory !== '';
+      default: return false;
     }
-
-    // Validate age is a number
-    if (isNaN(Number(formData.age)) || Number(formData.age) < 1 || Number(formData.age) > 100) {
-      Alert.alert('Error', 'Please enter a valid age (1-100)');
-      return;
-    }
-
-    // Validate session length is a number
-    if (isNaN(Number(formData.sessionLength)) || Number(formData.sessionLength) < 10 || Number(formData.sessionLength) > 300) {
-      Alert.alert('Error', 'Please enter a valid session length (10-300 minutes)');
-      return;
-    }
-
-    // Navigate to plan screen with form data
-    navigation.navigate('Plan', { formData });
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>AI Workout Plan</Text>
-          <Text style={styles.subtitle}>Tell us about yourself to create your perfect plan</Text>
-        </View>
+  const handleNext = () => {
+    if (!validateCurrentStep()) {
+      Alert.alert('Error', 'Please complete this question before continuing');
+      return;
+    }
 
-        <View style={styles.form}>
-          {/* Gender */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Gender *</Text>
-            <View style={styles.pickerContainer}>
-              <RNPickerSelect
-                onValueChange={(value) => setFormData({...formData, gender: value})}
-                items={genderOptions}
-                placeholder={{ label: 'Select your gender', value: null }}
-                style={pickerSelectStyles}
-                value={formData.gender}
-              />
+    if (currentStep === totalSteps) {
+      // Navigate to Plan screen with answers
+      navigation.navigate('Plan', { formData: answers });
+    } else {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const renderQuestion = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <QuestionCard
+            title="What is your gender?"
+            currentStep={currentStep}
+            totalSteps={totalSteps}
+            onNext={handleNext}
+            nextDisabled={!validateCurrentStep()}
+          >
+            <View style={styles.buttonGroup}>
+              {['Male', 'Female', 'Other'].map((option) => (
+                <TouchableOpacity
+                  key={option}
+                  style={[
+                    styles.optionButton,
+                    answers.gender === option.toLowerCase() && styles.optionButtonSelected,
+                  ]}
+                  onPress={() => setAnswers({ ...answers, gender: option.toLowerCase() })}
+                >
+                  <Text
+                    style={[
+                      styles.optionButtonText,
+                      answers.gender === option.toLowerCase() && styles.optionButtonTextSelected,
+                    ]}
+                  >
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
-          </View>
+          </QuestionCard>
+        );
 
-          {/* Age */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Age *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your age"
-              value={formData.age}
-              onChangeText={(value) => setFormData({...formData, age: value})}
-              keyboardType="numeric"
-              maxLength={3}
-            />
-          </View>
-
-          {/* Fitness Goal */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Fitness Goal *</Text>
-            <View style={styles.pickerContainer}>
-              <RNPickerSelect
-                onValueChange={(value) => setFormData({...formData, fitnessGoal: value})}
-                items={fitnessGoalOptions}
-                placeholder={{ label: 'Select your primary goal', value: null }}
-                style={pickerSelectStyles}
-                value={formData.fitnessGoal}
-              />
+      case 2:
+        return (
+          <QuestionCard
+            title="What is your age group?"
+            currentStep={currentStep}
+            totalSteps={totalSteps}
+            onNext={handleNext}
+            onBack={handleBack}
+            nextDisabled={!validateCurrentStep()}
+          >
+            <View style={styles.buttonGroup}>
+              {[
+                { label: '14-17', value: '14-17' },
+                { label: '18-25', value: '18-25' },
+                { label: '25-30', value: '25-30' },
+                { label: '30-40', value: '30-40' },
+                { label: '50+', value: '50+' },
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.optionButton,
+                    answers.age === option.value && styles.optionButtonSelected,
+                  ]}
+                  onPress={() => setAnswers({ ...answers, age: option.value })}
+                >
+                  <Text
+                    style={[
+                      styles.optionButtonText,
+                      answers.age === option.value && styles.optionButtonTextSelected,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
-          </View>
+          </QuestionCard>
+        );
 
-          {/* Workout Frequency */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Workout Frequency *</Text>
-            <View style={styles.pickerContainer}>
-              <RNPickerSelect
-                onValueChange={(value) => setFormData({...formData, workoutFrequency: value})}
-                items={workoutFrequencyOptions}
-                placeholder={{ label: 'How many days per week?', value: null }}
-                style={pickerSelectStyles}
-                value={formData.workoutFrequency}
-              />
+      case 3:
+        return (
+          <QuestionCard
+            title="What is your fitness goal?"
+            currentStep={currentStep}
+            totalSteps={totalSteps}
+            onNext={handleNext}
+            onBack={handleBack}
+            nextDisabled={!validateCurrentStep()}
+          >
+            <View style={styles.buttonGroup}>
+              {[
+                { label: 'Muscle Gain', value: 'muscle_gain' },
+                { label: 'Fat Loss', value: 'fat_loss' },
+                { label: 'Endurance', value: 'endurance' },
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.optionButton,
+                    answers.fitnessGoal === option.value && styles.optionButtonSelected,
+                  ]}
+                  onPress={() => setAnswers({ ...answers, fitnessGoal: option.value })}
+                >
+                  <Text
+                    style={[
+                      styles.optionButtonText,
+                      answers.fitnessGoal === option.value && styles.optionButtonTextSelected,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
-          </View>
+          </QuestionCard>
+        );
 
-          {/* Session Length */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Workout Session Length (minutes) *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g., 60"
-              value={formData.sessionLength}
-              onChangeText={(value) => setFormData({...formData, sessionLength: value})}
-              keyboardType="numeric"
-              maxLength={3}
-            />
-          </View>
+      case 4:
+        return (
+          <QuestionCard
+            title="How many days per week do you want to train?"
+            currentStep={currentStep}
+            totalSteps={totalSteps}
+            onNext={handleNext}
+            onBack={handleBack}
+            nextDisabled={!validateCurrentStep()}
+          >
+            <View style={styles.numberButtonGroup}>
+              {[1, 2, 3, 4, 5, 6, 7].map((num) => (
+                <TouchableOpacity
+                  key={num}
+                  style={[
+                    styles.numberButton,
+                    answers.workoutFrequency === num.toString() && styles.numberButtonSelected,
+                  ]}
+                  onPress={() => setAnswers({ ...answers, workoutFrequency: num.toString() })}
+                >
+                  <Text
+                    style={[
+                      styles.numberButtonText,
+                      answers.workoutFrequency === num.toString() && styles.numberButtonTextSelected,
+                    ]}
+                  >
+                    {num}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </QuestionCard>
+        );
 
-          {/* Injury History */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Injury History (Optional)</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Any injuries or physical limitations we should know about?"
-              value={formData.injuryHistory}
-              onChangeText={(value) => setFormData({...formData, injuryHistory: value})}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
+      case 5:
+        return (
+          <QuestionCard
+            title="How long should each session be?"
+            currentStep={currentStep}
+            totalSteps={totalSteps}
+            onNext={handleNext}
+            onBack={handleBack}
+            nextDisabled={!validateCurrentStep()}
+          >
+            <View style={styles.buttonGroup}>
+              {[
+                { label: '0-30 minutes', value: '0-30' },
+                { label: '30-60 minutes', value: '30-60' },
+                { label: '60-90 minutes', value: '60-90' },
+                { label: '90-120 minutes', value: '90-120' },
+                { label: '120+ minutes', value: '120+' },
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.optionButton,
+                    answers.sessionLength === option.value && styles.optionButtonSelected,
+                  ]}
+                  onPress={() => setAnswers({ ...answers, sessionLength: option.value })}
+                >
+                  <Text
+                    style={[
+                      styles.optionButtonText,
+                      answers.sessionLength === option.value && styles.optionButtonTextSelected,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </QuestionCard>
+        );
 
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Generate My Plan</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+      case 6:
+        return (
+          <QuestionCard
+            title="Do you have any injury history?"
+            currentStep={currentStep}
+            totalSteps={totalSteps}
+            onNext={handleNext}
+            onBack={handleBack}
+            nextDisabled={!validateCurrentStep()}
+          >
+            <View style={styles.buttonGroup}>
+              {[
+                { label: 'None', value: 'none' },
+                { label: 'Lower back pain', value: 'lower_back_pain' },
+                { label: 'Shoulders', value: 'shoulders' },
+                { label: 'Knees', value: 'knees' },
+                { label: 'Wrist/elbow', value: 'wrist_elbow' },
+                { label: 'Chronic Joint pain', value: 'chronic_joint_pain' },
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.optionButton,
+                    answers.injuryHistory === option.value && styles.optionButtonSelected,
+                  ]}
+                  onPress={() => setAnswers({ ...answers, injuryHistory: option.value })}
+                >
+                  <Text
+                    style={[
+                      styles.optionButtonText,
+                      answers.injuryHistory === option.value && styles.optionButtonTextSelected,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </QuestionCard>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return <View style={styles.container}>{renderQuestion()}</View>;
 }
 
-const styles = StyleSheet.create({
+const questionCardStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
-  },
-  scrollView: {
-    flex: 1,
   },
   header: {
     padding: 20,
@@ -188,80 +385,174 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  progressContainer: {
+    marginBottom: 10,
+  },
+  progressText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: '#e9ecef',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#007AFF',
+    borderRadius: 2,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+  },
+  backText: {
+    color: '#007AFF',
+    fontSize: 16,
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+  },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#333',
     textAlign: 'center',
+    marginBottom: 40,
+    lineHeight: 36,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 8,
+  inputContainer: {
+    alignItems: 'center',
   },
-  form: {
+  footer: {
     padding: 20,
-  },
-  fieldContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
     backgroundColor: 'white',
   },
-  textArea: {
-    height: 100,
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    backgroundColor: 'white',
-  },
-  submitButton: {
+  nextButton: {
     backgroundColor: '#007AFF',
-    padding: 16,
+    padding: 18,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  submitButtonText: {
+  nextButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  nextButtonText: {
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
   },
-});
-
-const pickerSelectStyles = {
-  inputIOS: {
-    fontSize: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    color: '#333',
-  },
-  inputAndroid: {
-    fontSize: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    color: '#333',
-  },
-  placeholder: {
+  nextButtonTextDisabled: {
     color: '#999',
   },
-}; 
+});
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  buttonGroup: {
+    width: '100%',
+    maxWidth: 300,
+  },
+  optionButton: {
+    backgroundColor: 'white',
+    borderWidth: 2,
+    borderColor: '#e9ecef',
+    borderRadius: 12,
+    padding: 18,
+    marginBottom: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  optionButtonSelected: {
+    borderColor: '#007AFF',
+    backgroundColor: '#f0f8ff',
+  },
+  optionButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  optionButtonTextSelected: {
+    color: '#007AFF',
+  },
+  textInput: {
+    borderWidth: 2,
+    borderColor: '#e9ecef',
+    borderRadius: 12,
+    padding: 18,
+    fontSize: 24,
+    fontWeight: '600',
+    backgroundColor: 'white',
+    width: 120,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  textArea: {
+    height: 120,
+    width: 300,
+    textAlignVertical: 'top',
+    fontSize: 16,
+    fontWeight: 'normal',
+  },
+  numberButtonGroup: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    maxWidth: 280,
+  },
+  numberButton: {
+    backgroundColor: 'white',
+    borderWidth: 2,
+    borderColor: '#e9ecef',
+    borderRadius: 50,
+    width: 60,
+    height: 60,
+    margin: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  numberButtonSelected: {
+    borderColor: '#007AFF',
+    backgroundColor: '#f0f8ff',
+  },
+  numberButtonText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  numberButtonTextSelected: {
+    color: '#007AFF',
+  },
+  inputWithLabel: {
+    alignItems: 'center',
+  },
+  inputLabel: {
+    fontSize: 18,
+    color: '#666',
+    marginTop: 12,
+    fontWeight: '500',
+  },
+}); 
