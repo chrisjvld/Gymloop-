@@ -19,6 +19,12 @@ export interface WorkoutPlan {
 
 export async function generateWorkoutPlan(userData: WorkoutPlanData): Promise<WorkoutPlan> {
   try {
+    const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error('OpenAI API key not found in environment variables');
+    }
+
     const prompt = `Create a personalized workout plan for a ${userData.age}-year-old ${userData.gender} with the following preferences:
 
 - Primary goal: ${userData.fitnessGoal}
@@ -38,7 +44,7 @@ Format the response in a clear, easy-to-follow structure that someone can take t
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer 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',
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: 'gpt-3.5-turbo',

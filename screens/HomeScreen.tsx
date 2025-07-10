@@ -7,16 +7,18 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
-import { supabase } from '../lib/supabase';
+import { useAuth } from '../lib/AuthContext';
 
 interface HomeScreenProps {
   navigation: any;
 }
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
+  const { signOut } = useAuth();
+
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      await signOut();
       // Navigation happens automatically via auth state change
     } catch (error) {
       Alert.alert('Error', 'Failed to sign out');

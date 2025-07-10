@@ -7,6 +7,7 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
 
@@ -18,6 +19,9 @@ interface Plan {
   id: string;
   name: string;
   description?: string;
+  goal?: string;
+  plan_text?: string;
+  user_id?: string;
   created_at?: string;
 }
 
@@ -32,6 +36,7 @@ export default function PlansScreen({ navigation }: PlansScreenProps) {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -45,9 +50,18 @@ export default function PlansScreen({ navigation }: PlansScreenProps) {
 
   const fetchPlans = async () => {
     try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.error('User not authenticated');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('plans')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -91,14 +105,36 @@ export default function PlansScreen({ navigation }: PlansScreenProps) {
     // navigation.navigate('CreateWorkout');
   };
 
-  const renderPlanItem = ({ item }: { item: Plan }) => (
-    <TouchableOpacity style={styles.listItem}>
-      <Text style={styles.itemTitle}>{item.name}</Text>
-      {item.description && (
-        <Text style={styles.itemDescription}>{item.description}</Text>
-      )}
-    </TouchableOpacity>
-  );
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
+
+  const renderPlanItem = ({ item }: { item: Plan }) => {
+    // Create a preview of the plan text (first 150 characters)
+    const planPreview = item.plan_text 
+      ? item.plan_text.length > 150 
+        ? item.plan_text.substring(0, 150) + '...'
+        : item.plan_text
+      : item.description || 'No preview available';
+
+    return (
+      <TouchableOpacity style={styles.listItem}>
+        <Text style={styles.itemTitle}>
+          {item.goal || item.name}
+        </Text>
+        <Text style={styles.itemDescription}>
+          {planPreview}
+        </Text>
+        {item.created_at && (
+          <Text style={styles.itemDate}>
+            Created: {new Date(item.created_at).toLocaleDateString()}
+          </Text>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   const renderWorkoutItem = ({ item }: { item: Workout }) => (
     <TouchableOpacity style={styles.listItem}>
@@ -142,6 +178,9 @@ export default function PlansScreen({ navigation }: PlansScreenProps) {
             }
             style={styles.list}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
           />
         </View>
 
@@ -165,6 +204,9 @@ export default function PlansScreen({ navigation }: PlansScreenProps) {
             }
             style={styles.list}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
           />
         </View>
       </View>
@@ -251,6 +293,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     lineHeight: 20,
+  },
+  itemDate: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 8,
+    fontStyle: 'italic',
   },
   emptyText: {
     textAlign: 'center',

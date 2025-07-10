@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { supabase } from './lib/supabase';
+import { AuthProvider, useAuth } from './lib/AuthContext';
 
 // Import screens
 import LoginScreen from './screens/LoginScreen';
@@ -15,24 +15,8 @@ import LoadingScreen from './components/LoadingScreen';
 
 const Stack = createNativeStackNavigator();
 
-export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => subscription?.unsubscribe();
-  }, []);
+function AppNavigator() {
+  const { session, loading } = useAuth();
 
   if (loading) {
     return <LoadingScreen />;
@@ -41,13 +25,13 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={isAuthenticated ? 'Home' : 'Login'}
+        initialRouteName={session ? 'Home' : 'Login'}
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
         }}
       >
-        {!isAuthenticated ? (
+        {!session ? (
           // Auth Stack
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
@@ -65,5 +49,13 @@ export default function App() {
         )}
       </Stack.Navigator>
     </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppNavigator />
+    </AuthProvider>
   );
 } 

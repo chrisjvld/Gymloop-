@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { generateWorkoutPlan, WorkoutPlan } from '../lib/openai';
+import { supabase } from '../lib/supabase';
 
 interface PlanScreenProps {
   navigation: any;
@@ -21,6 +22,8 @@ export default function PlanScreen({ navigation, route }: PlanScreenProps) {
   const [workoutPlan, setWorkoutPlan] = useState<WorkoutPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (formData) {
@@ -35,14 +38,66 @@ export default function PlanScreen({ navigation, route }: PlanScreenProps) {
     try {
       setIsLoading(true);
       setError(null);
+      setIsSaved(false);
+      
+      // Generate the AI workout plan
       const plan = await generateWorkoutPlan(formData);
       setWorkoutPlan(plan);
+      
+      // Automatically save the plan to Supabase
+      await savePlanToSupabase(plan);
+      
     } catch (err) {
       console.error('Error generating plan:', err);
       setError(err instanceof Error ? err.message : 'Failed to generate workout plan');
       Alert.alert('Error', 'Failed to generate your workout plan. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const savePlanToSupabase = async (plan: WorkoutPlan) => {
+    try {
+      setIsSaving(true);
+      
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Create goal summary from form data
+      const goalSummary = `${formData.fitnessGoal?.replace('_', ' ')} - ${formData.workoutFrequency} days/week, ${formData.sessionLength} min sessions`;
+
+      // Save to plans table
+      const { error } = await supabase
+        .from('plans')
+        .insert({
+          user_id: user.id,
+          name: plan.name,
+          plan_text: plan.fullPlan,
+          goal: goalSummary,
+          description: plan.description,
+          form_data: formData
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      setIsSaved(true);
+      console.log('Plan saved successfully to Supabase');
+      
+    } catch (error) {
+      console.error('Error saving plan to Supabase:', error);
+      // Don't throw error - plan generation was successful, saving is secondary
+      Alert.alert(
+        'Plan Generated', 
+        'Your workout plan was generated successfully, but there was an issue saving it. You can still view your plan below.'
+      );
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -135,8 +190,21 @@ export default function PlanScreen({ navigation, route }: PlanScreenProps) {
               <Text style={styles.planText}>{workoutPlan.fullPlan}</Text>
             </View>
 
-            <TouchableOpacity style={styles.saveButton}>
-              <Text style={styles.saveButtonText}>Save Plan</Text>
+            <TouchableOpacity 
+              style={[
+                styles.saveButton, 
+                isSaved && styles.savedButton,
+                isSaving && styles.savingButton
+              ]}
+              disabled={isSaving}
+              onPress={() => workoutPlan && savePlanToSupabase(workoutPlan)}
+            >
+              <Text style={[
+                styles.saveButtonText,
+                isSaved && styles.savedButtonText
+              ]}>
+                {isSaving ? 'Saving...' : isSaved ? 'Saved ✓' : 'Save Plan'}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -260,10 +328,19 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  savedButton: {
+    backgroundColor: '#6c757d',
+  },
+  savingButton: {
+    backgroundColor: '#007AFF',
+  },
   saveButtonText: {
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  savedButtonText: {
+    color: '#f8f9fa',
   },
   loader: {
     marginBottom: 20,
